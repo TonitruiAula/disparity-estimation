@@ -12,7 +12,7 @@ class calibrater:
         self.numWidth = 10
         self.numHeight = 7
         self.cal = False
-        
+
     #初始化标定
     def initCalibration(self):
         #获取格的宽高
@@ -21,6 +21,8 @@ class calibrater:
         #清空世界坐标点和图像坐标点
         self.objpoints = [] #世界坐标点
         self.imgpoints = [] #图像坐标点
+        #图片数置零
+        self.imageNum = 0
         print 'Start calibrating...'
 
     #为标定工作拍摄图片
@@ -44,7 +46,7 @@ class calibrater:
             img = self.frame.copy()
             cv2.drawChessboardCorners(img, (w,h), corners, ret)
             cv2.imshow('findCorners',img)
-
+            self.imageNum = self.imageNum + 1
             print 'Picture shot for calibration'
         else:
             print 'Cannot find corners'
@@ -52,6 +54,7 @@ class calibrater:
     #打印结果，tr表示是否打印外参数
     def printResult(self,tr = False):
         print "ret:",self.ret  
+        print "number of images:",self.imageNum
         print "mtx:\n",self.mtx        # 内参数矩阵  
         print "dist:\n",self.dist      # 畸变系数   distortion cofficients = (k_1,k_2,p_1,p_2,k_3)  
         if tr == True:
