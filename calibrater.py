@@ -2,6 +2,7 @@
 
 import cv2
 import numpy as np
+import time
 
 def fun(x):
     pass
@@ -51,15 +52,28 @@ class calibrater:
         else:
             print 'Cannot find corners'
 
-    #打印结果，tr表示是否打印外参数
-    def printResult(self,tr = False):
+    #打印结果，tr表示是否打印外参数,sf表示是否保存内参信息至文件
+    def printResult(self,tr = False,sf = True):
         print "ret:",self.ret  
         print "number of images:",self.imageNum
         print "mtx:\n",self.mtx        # 内参数矩阵  
         print "dist:\n",self.dist      # 畸变系数   distortion cofficients = (k_1,k_2,p_1,p_2,k_3)  
         if tr == True:
-            print "rvecs:\n",self.rvecs    # 旋转向量  # 外参数  
-            print "tvecs:\n",self.tvecs    # 平移向量  # 外参数  
+            print "rvecs:\n",self.rvecs    # 旋转向量   
+            print "tvecs:\n",self.tvecs    # 平移向量   
+        if sf == True:  #保存内参至文件
+            fileName = 'results/' + time.strftime('%Y_%m_%d_%H_%M_%S')
+            f = open(fileName,'w')
+            f.write('ret:'+ str(self.ret) + '\nnumber of images:' + str(self.imageNum) + '\nmtx:\n')
+            f.close()
+            f = open(fileName,'ab')
+            np.savetxt(f,self.mtx,fmt='%.6f')
+            f.close()
+            f = open(fileName,'a')
+            f.write('\ndist:\n')
+            f.close()
+            f = open(fileName,'ab')
+            np.savetxt(f,self.dist,fmt='%.6f')
 
     #标定过程
     def calibrate(self):
@@ -69,7 +83,7 @@ class calibrater:
         cv2.namedWindow('capture')
         cv2.createTrackbar('棋盘格宽','capture',10,30,fun)
         cv2.createTrackbar('棋盘格高','capture',7,30,fun)
-
+        
         while(1):
             ret,self.frame = vc.read()  #读取当前帧
             cv2.imshow('capture',self.frame)
