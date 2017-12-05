@@ -120,6 +120,8 @@ class calibrater:
             imgpoints2, _ = cv2.projectPoints(self.objpoints[i],self.rvecs[i],self.tvecs[i],self.mtx,self.dist)
             error = cv2.norm(self.imgpoints[i],imgpoints2,cv2.NORM_L2) / len(imgpoints2)
             self.total_error += error
+        #计算平均误差（之前忘了orz）
+        self.total_error /= len(self.objpoints)
 
     #标定过程
     def calibrate(self):
