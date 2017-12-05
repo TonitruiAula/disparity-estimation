@@ -8,6 +8,13 @@ class calibrater:
     #初始化标定状态
     def __init__(self):
         self.cal = False
+        self.__tr = False
+        self.__sf = True
+
+    #设置外参和输出
+    def setTr(self,tr = False, sf = True):
+        self.__tr = tr
+        self.__sf = sf
 
     #更新格的宽高
     def update(self,x):
@@ -57,6 +64,7 @@ class calibrater:
         print "number of images:",self.imageNum
         print "mtx:\n",self.mtx        # 内参数矩阵  
         print "dist:\n",self.dist      # 畸变系数   distortion cofficients = (k_1,k_2,p_1,p_2,k_3)  
+        print "totol-error:\n",self.total_error
         if tr == True:
             print "rvecs:\n",self.rvecs    # 旋转向量   
             print "tvecs:\n",self.tvecs    # 平移向量   
@@ -73,6 +81,32 @@ class calibrater:
             f.close()
             f = open(fileName,'ab')
             np.savetxt(f,self.dist,fmt='%.6f')
+            f = open(fileName,'a')
+            f.write('\ntotal-error:' + str(self.total_error) + '\n')
+            f.close()
+
+    #去除畸变
+    def undisort(self):
+        h,w = self.frame.shape[:2]
+        newcameramtx,roi = cv2.getOptimalNewCameraMatrix(self.mtx,self.dist,(w,h),1,(w,h))
+        t = time.strftime('%Y_%m_%d_%H_%M_%S')
+        srcName = 'undistortion/origin_' + t + '.png'
+        dstName = 'undistortion/result_' + t + '.png'
+        dst = cv2.undistort(self.frame,self.mtx,self.dist,None,newcameramtx)
+        x,y,w,h = roi
+        dst = dst[y:y+h,x:x+w]
+        cv2.imshow('origin',self.frame)
+        cv2.imshow('result',dst)
+        cv2.imwrite(srcName,self.frame)
+        cv2.imwrite(dstName,dst)
+
+    #计算重投影误差
+    def calError(self):
+        self.total_error = 0
+        for i in xrange(len(self.objpoints)):
+            imgpoints2, _ = cv2.projectPoints(self.objpoints[i],self.rvecs[i],self.tvecs[i],self.mtx,self.dist)
+            error = cv2.norm(self.imgpoints[i],imgpoints2,cv2.NORM_L2) / len(imgpoints2)
+            self.total_error += error
 
     #标定过程
     def calibrate(self):
@@ -101,14 +135,18 @@ class calibrater:
                 #结束是计算标定结果并输出
                 else:
                     self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(self.objpoints, self.imgpoints, self.gray.shape[::-1], None, None)
-                    self.printResult()
+                    self.calError()
+                    self.printResult(self.__tr,self.__sf)
                     print 'Calibration finished!'
             elif key == ord('s'):   #s键拍照
                 if self.cal == True:
-                    self.shotBoards()                
+                    self.shotBoards()
+            elif key == ord('d'):   #d键去畸
+                    self.undisort()
         vc.release()
         cv2.destroyAllWindows()
 
 
 c = calibrater()
+#c.setTr(True,False)
 c.calibrate()
