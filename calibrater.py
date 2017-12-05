@@ -4,21 +4,20 @@ import cv2
 import numpy as np
 import time
 
-def fun(x):
-    pass
-
 class calibrater:
-    #初始化格的宽高以及标定状态
+    #初始化标定状态
     def __init__(self):
-        self.numWidth = 10
-        self.numHeight = 7
         self.cal = False
+
+    #更新格的宽高
+    def update(self,x):
+        self.numWidth = cv2.getTrackbarPos('棋盘格宽','capture')
+        self.numHeight = cv2.getTrackbarPos('棋盘格高','capture')
 
     #初始化标定
     def initCalibration(self):
         #获取格的宽高
-        self.numWidth = cv2.getTrackbarPos('棋盘格宽','capture')
-        self.numHeight = cv2.getTrackbarPos('棋盘格高','capture')
+        self.update(0)
         #清空世界坐标点和图像坐标点
         self.objpoints = [] #世界坐标点
         self.imgpoints = [] #图像坐标点
@@ -81,15 +80,15 @@ class calibrater:
         vc = cv2.VideoCapture(0)
         #建立窗口
         cv2.namedWindow('capture')
-        cv2.createTrackbar('棋盘格宽','capture',10,30,fun)
-        cv2.createTrackbar('棋盘格高','capture',7,30,fun)
+        cv2.createTrackbar('棋盘格宽','capture',10,30,self.update)
+        cv2.createTrackbar('棋盘格高','capture',7,30,self.update)
         
         while(1):
             ret,self.frame = vc.read()  #读取当前帧
             cv2.imshow('capture',self.frame)
-            #更新棋盘格宽高
-            self.numWidth = cv2.getTrackbarPos('棋盘格宽','capture')
-            self.numHeight = cv2.getTrackbarPos('棋盘格高','capture')
+            # #更新棋盘格宽高
+            # self.numWidth = cv2.getTrackbarPos('棋盘格宽','capture')
+            # self.numHeight = cv2.getTrackbarPos('棋盘格高','capture')
             #计算灰度图
             self.gray = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
             #获取按键
