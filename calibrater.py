@@ -87,18 +87,31 @@ class calibrater:
 
     #去除畸变
     def undisort(self):
-        h,w = self.frame.shape[:2]
+        h,w = self.frame.shape[:2]  #获取形状
+        #获取优化后的参数矩阵以及ROI
         newcameramtx,roi = cv2.getOptimalNewCameraMatrix(self.mtx,self.dist,(w,h),1,(w,h))
+        #设定输出的图片
         t = time.strftime('%Y_%m_%d_%H_%M_%S')
         srcName = 'undistortion/origin_' + t + '.png'
-        dstName = 'undistortion/result_' + t + '.png'
-        dst = cv2.undistort(self.frame,self.mtx,self.dist,None,newcameramtx)
+        dstName1 = 'undistortion/result1_' + t + '.png'
+        dstName2 = 'undistortion/result2_' + t + '.png'
+        #方法一：直接使用undistort函数
+        dst1 = cv2.undistort(self.frame,self.mtx,self.dist,None,newcameramtx)
+        #方法二：使用重映射方法
+        mapx, mapy = cv2.initUndistortRectifyMap(self.mtx, self.dist, None, newcameramtx, (w,h), 5)
+        dst2 = cv2.remap(self.frame, mapx, mapy, cv2.INTER_LINEAR)
+        #截取ROI
         x,y,w,h = roi
-        dst = dst[y:y+h,x:x+w]
+        dst1 = dst1[y:y+h,x:x+w]
+        dst2 = dst2[y:y+h,x:x+w]
+        #显示去畸变前后的图像
         cv2.imshow('origin',self.frame)
-        cv2.imshow('result',dst)
+        cv2.imshow('result1',dst1)
+        cv2.imshow('result2',dst2)
+        #保存去畸变前后的图像
         cv2.imwrite(srcName,self.frame)
-        cv2.imwrite(dstName,dst)
+        cv2.imwrite(dstName1,dst1)
+        cv2.imwrite(dstName2,dst2)
 
     #计算重投影误差
     def calError(self):
@@ -142,7 +155,7 @@ class calibrater:
                 if self.cal == True:
                     self.shotBoards()
             elif key == ord('d'):   #d键去畸
-                    self.undisort()
+                self.undisort()
         vc.release()
         cv2.destroyAllWindows()
 
