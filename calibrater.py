@@ -86,9 +86,6 @@ class calibrater:
         while(1):
             ret,self.frame = vc.read()  #读取当前帧
             cv2.imshow('capture',self.frame)
-            # #更新棋盘格宽高
-            # self.numWidth = cv2.getTrackbarPos('棋盘格宽','capture')
-            # self.numHeight = cv2.getTrackbarPos('棋盘格高','capture')
             #计算灰度图
             self.gray = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
             #获取按键
