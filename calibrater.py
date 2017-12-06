@@ -99,16 +99,10 @@ class calibrater:
             f = open(fileName,'a')
             f.write('\ntotal-error:' + str(self.total_error) + '\n')
             f.close()
-            fileName = 'results/bin/' + t + '.npy'
-            f = open(fileName,'wb')
-            np.save(f,self.mtx)
-            np.save(f,self.dist)
-            np.save(f,self.objpoints)
-            np.save(f,self.imgpoints)
-            np.save(f,self.pointCounts)
-            np.save(f,self.rvecs)
-            np.save(f,self.tvecs)
-            f.close()
+            fileName = 'results/bin/' + t + '.npz'
+            np.savez(fileName,mtx=self.mtx,dist=self.dist,objpoints=self.objpoints, \
+            imgpoints=self.imgpoints,pointCounts=self.pointCounts, \
+            rvecs=self.rvecs,tvecs=self.tvecs,imageNum=self.imageNum)
 
     #加载内参
     def loadMtx(self,filename,printlog = True):
@@ -117,13 +111,15 @@ class calibrater:
         else:
             f = open(filename,'rb')
             self.__mtx = True
-            self.mtx = np.load(f)
-            self.dist = np.load(f)
-            self.objpoints = np.load(f)
-            self.imgpoints = np.load(f)
-            self.pointCounts = np.load(f)
-            self.rvecs = np.load(f)
-            self.tvecs = np.load(f)
+            data = np.load(f)
+            self.mtx = data['mtx']
+            self.dist = data['dist']
+            self.objpoints = data['objpoints']
+            self.imgpoints = data['imgpoints']
+            self.pointCounts = data['pointCounts']
+            self.rvecs = data['rvecs']
+            self.tvecs = data['tvecs']
+            self.imageNum = data['imageNum']
             if printlog == True:
                 print 'Loading calibration data......'
                 print 'mtx:\n',self.mtx
