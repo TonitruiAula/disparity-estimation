@@ -1,3 +1,4 @@
 results
 undistortion
 !.gitignore
+*.pyc

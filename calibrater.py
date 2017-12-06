@@ -111,7 +111,7 @@ class calibrater:
             f.close()
 
     #加载内参
-    def loadMtx(self,filename):
+    def loadMtx(self,filename,printlog = True):
         if os.path.isfile(filename) == False:
             print 'Cannot find file'
         else:
@@ -124,14 +124,15 @@ class calibrater:
             self.pointCounts = np.load(f)
             self.rvecs = np.load(f)
             self.tvecs = np.load(f)
-            print 'Loading calibration data......'
-            print 'mtx:\n',self.mtx
-            print 'dist:\n',self.dist
-            # print 'objpoints\n',self.objpoints
-            # print 'pointCounts\n',self.pointCounts
-            print 'Calibration data loaded!'
-            self.calError()
-            print 'total-error:',self.total_error
+            if printlog == True:
+                print 'Loading calibration data......'
+                print 'mtx:\n',self.mtx
+                print 'dist:\n',self.dist
+                # print 'objpoints\n',self.objpoints
+                # print 'pointCounts\n',self.pointCounts
+                print 'Calibration data loaded!'
+                self.calError()
+                print 'total-error:',self.total_error
 
     #去除畸变
     def undisort(self):
@@ -219,7 +220,3 @@ class calibrater:
         vc.release()
         cv2.destroyAllWindows()
 
-
-c = calibrater()
-#c.setTr(True,False)
-c.calibrate(0)
