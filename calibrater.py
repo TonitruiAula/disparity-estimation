@@ -3,6 +3,13 @@
 import cv2
 import numpy as np
 import time
+import os
+
+def checkPath(path):
+    if os.path.isdir(path):
+        pass
+    else:
+        os.mkdir(path)
 
 class calibrater:
     #初始化标定状态
@@ -10,7 +17,12 @@ class calibrater:
         self.cal = False
         self.__tr = False
         self.__sf = True
-
+        checkPath('results')
+        checkPath('results/text')
+        checkPath('results/bin')
+        checkPath('undistortion')
+        self.__mtx = False
+        
     #设置外参和输出
     def setTr(self,tr = False, sf = True):
         self.__tr = tr
@@ -56,7 +68,7 @@ class calibrater:
             cv2.drawChessboardCorners(img, (w,h), corners, ret)
             cv2.imshow('findCorners',img)
             self.imageNum = self.imageNum + 1
-            print 'Picture shot for calibration'
+            print 'Picture shot for calibration. Current image count:',self.imageNum
         else:
             print 'Cannot find corners'
 
@@ -71,7 +83,7 @@ class calibrater:
             print "rvecs:\n",self.rvecs    # 旋转向量   
             print "tvecs:\n",self.tvecs    # 平移向量   
         if sf == True:  #保存内参至文件
-            t = time.strftime('%Y_%m_%d_%H_%M_%S')
+            t = time.strftime('%Y%m%d%H%M%S')
             fileName = 'results/text/' + t + '.txt'
             f = open(fileName,'w')
             f.write('ret:'+ str(self.ret) + '\nnumber of images:' + str(self.imageNum) + '\nmtx:\n')
@@ -92,30 +104,44 @@ class calibrater:
             np.save(f,self.mtx)
             np.save(f,self.dist)
             np.save(f,self.objpoints)
+            np.save(f,self.imgpoints)
             np.save(f,self.pointCounts)
+            np.save(f,self.rvecs)
+            np.save(f,self.tvecs)
             f.close()
 
     #加载内参
     def loadMtx(self,filename):
-        f = open(filename,'rb')
-        self.mtx = np.load(f)
-        self.dist = np.load(f)
-        self.objpoints = np.load(f)
-        self.pointCounts = np.load(f)
-        print 'Loading calibration data......'
-        print 'mtx:\n',self.mtx
-        print 'dist:\n',self.dist
-        print 'objpoints\n',self.objpoints
-        print 'pointCounts\n',self.pointCounts
-        print 'Calibration data loaded!'
+        if os.path.isfile(filename) == False:
+            print 'Cannot find file'
+        else:
+            f = open(filename,'rb')
+            self.__mtx = True
+            self.mtx = np.load(f)
+            self.dist = np.load(f)
+            self.objpoints = np.load(f)
+            self.imgpoints = np.load(f)
+            self.pointCounts = np.load(f)
+            self.rvecs = np.load(f)
+            self.tvecs = np.load(f)
+            print 'Loading calibration data......'
+            print 'mtx:\n',self.mtx
+            print 'dist:\n',self.dist
+            # print 'objpoints\n',self.objpoints
+            # print 'pointCounts\n',self.pointCounts
+            print 'Calibration data loaded!'
+            self.calError()
+            print 'total-error:',self.total_error
 
     #去除畸变
     def undisort(self):
+        if self.__mtx == False:
+            return
         h,w = self.frame.shape[:2]  #获取形状
         #获取优化后的参数矩阵以及ROI
         newcameramtx,roi = cv2.getOptimalNewCameraMatrix(self.mtx,self.dist,(w,h),1,(w,h))
         #设定输出的图片
-        t = time.strftime('%Y_%m_%d_%H_%M_%S')
+        t = time.strftime('%Y%m%d%H%M%S')
         srcName = 'undistortion/origin_' + t + '.png'
         dstName1 = 'undistortion/result1_' + t + '.png'
         dstName2 = 'undistortion/result2_' + t + '.png'
@@ -173,10 +199,14 @@ class calibrater:
                     self.initCalibration()
                 #结束是计算标定结果并输出
                 else:
-                    self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(self.objpoints, self.imgpoints, self.gray.shape[::-1], None, None)
-                    self.calError()
-                    self.printResult(self.__tr,self.__sf)
-                    print 'Calibration finished!'
+                    if self.imageNum == 0:
+                        print 'Calibration failed: No image shot for calibration'
+                    else:
+                        self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(self.objpoints, self.imgpoints, self.gray.shape[::-1], None, None)
+                        self.__mtx = True
+                        self.calError()
+                        self.printResult(self.__tr,self.__sf)
+                        print 'Calibration finished!'
             elif key == ord('s'):   #s键拍照
                 if self.cal == True:
                     self.shotBoards()
