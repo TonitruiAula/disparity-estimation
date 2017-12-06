@@ -7,6 +7,13 @@ import os
 import glob
 from calibrater import calibrater
 
+def checkPath(path):
+    if os.path.isdir(path):
+        pass
+    else:
+        os.mkdir(path)
+
+
 #计算存放在./results/bin文件夹里的标定内参和畸变参数的平均值,
 #weight表示是否按照图片数加权计算平均，默认为True
 def avgMtx(weight = True):
@@ -39,11 +46,12 @@ def avgMtx(weight = True):
     return [amtx,adist,aerror,len(fname)]
 
 #.npz转.txt
-def npz2txt(filename):
+def npz2txt(filename,path = './results/text'):
+    checkPath(path)
     c = calibrater()
     c.loadMtx(filename)
     c.calError()
-    filename = './results/text' + filename[13:-4] + '.txt'
+    filename = path + filename[13:-4] + '.txt'
     f = open(filename,'w')
     f.write('ret:'+ str(c.ret) + '\nnumber of images:' + str(c.imageNum) + '\nmtx:\n')
     f.close()
@@ -60,7 +68,8 @@ def npz2txt(filename):
     f.close()
 
 #将存放在./results/bin文件夹里的二进制文件全部转为文本文件并放入对应的text文件夹
-def npzall2txt():
+def npzall2txt(path = './results/text'):
     fname = glob.glob('./results/bin/*.npz')
     for f in fname:
-        npz2txt(f)
+        npz2txt(f,path)
+
