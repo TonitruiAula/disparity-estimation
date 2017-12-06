@@ -37,3 +37,30 @@ def avgMtx(weight = True):
         adist = adist / len(fname)
         aerror = aerror / len(fname)
     return [amtx,adist,aerror,len(fname)]
+
+#.npz转.txt
+def npz2txt(filename):
+    c = calibrater()
+    c.loadMtx(filename)
+    c.calError()
+    filename = './results/text' + filename[13:-4] + '.txt'
+    f = open(filename,'w')
+    f.write('ret:'+ str(c.ret) + '\nnumber of images:' + str(c.imageNum) + '\nmtx:\n')
+    f.close()
+    f = open(filename,'ab')
+    np.savetxt(f,c.mtx,fmt='%.6f')
+    f.close()
+    f = open(filename,'a')
+    f.write('\ndist:\n')
+    f.close()
+    f = open(filename,'ab')
+    np.savetxt(f,c.dist,fmt='%.6f')
+    f = open(filename,'a')
+    f.write('\ntotal-error:' + str(c.total_error) + '\n')
+    f.close()
+
+#将存放在./results/bin文件夹里的二进制文件全部转为文本文件并放入对应的text文件夹
+def npzall2txt():
+    fname = glob.glob('./results/bin/*.npz')
+    for f in fname:
+        npz2txt(f)

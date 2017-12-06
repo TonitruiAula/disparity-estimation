@@ -21,6 +21,7 @@ class calibrater:
         checkPath('results/text')
         checkPath('results/bin')
         checkPath('undistortion')
+        checkPath('undistortion')
         self.__mtx = False
         
     #设置外参和输出
@@ -102,7 +103,7 @@ class calibrater:
             fileName = 'results/bin/' + t + '.npz'
             np.savez(fileName,mtx=self.mtx,dist=self.dist,objpoints=self.objpoints, \
             imgpoints=self.imgpoints,pointCounts=self.pointCounts, \
-            rvecs=self.rvecs,tvecs=self.tvecs,imageNum=self.imageNum)
+            rvecs=self.rvecs,tvecs=self.tvecs,imageNum=self.imageNum,ret=self.ret)
 
     #加载内参
     def loadMtx(self,filename,printlog = True):
@@ -112,6 +113,7 @@ class calibrater:
             f = open(filename,'rb')
             self.__mtx = True
             data = np.load(f)
+            self.ret = data['ret']
             self.mtx = data['mtx']
             self.dist = data['dist']
             self.objpoints = data['objpoints']
@@ -122,6 +124,7 @@ class calibrater:
             self.imageNum = data['imageNum']
             if printlog == True:
                 print 'Loading calibration data......'
+                print 'ret:\n',self.ret
                 print 'mtx:\n',self.mtx
                 print 'dist:\n',self.dist
                 # print 'objpoints\n',self.objpoints
@@ -139,9 +142,10 @@ class calibrater:
         newcameramtx,roi = cv2.getOptimalNewCameraMatrix(self.mtx,self.dist,(w,h),1,(w,h))
         #设定输出的图片
         t = time.strftime('%Y%m%d%H%M%S')
-        srcName = 'undistortion/origin_' + t + '.png'
-        dstName1 = 'undistortion/result1_' + t + '.png'
-        dstName2 = 'undistortion/result2_' + t + '.png'
+        os.mkdir('undistortion/' + t)
+        srcName = 'undistortion/' + t + '/origin_' + t + '.png'
+        dstName1 = 'undistortion/' + t + '/result1_' + t + '.png'
+        dstName2 = 'undistortion/' + t + '/result2_' + t + '.png'
         #方法一：直接使用undistort函数
         dst1 = cv2.undistort(self.frame,self.mtx,self.dist,None,newcameramtx)
         #方法二：使用重映射方法
