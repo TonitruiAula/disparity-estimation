@@ -28,6 +28,7 @@ class calibrater:
         #清空世界坐标点和图像坐标点
         self.objpoints = [] #世界坐标点
         self.imgpoints = [] #图像坐标点
+        self.pointCounts = []   #图片的角点数
         #图片数置零
         self.imageNum = 0
         print 'Start calibrating...'
@@ -37,6 +38,7 @@ class calibrater:
         #获取内部的格点数目
         w = self.numWidth - 1
         h = self.numHeight - 1
+        self.pointCounts.append(w*h)
         # 设置寻找亚像素角点的参数，最大循环次数30和最大误差容限0.001
         criteria = (cv2.TERM_CRITERIA_MAX_ITER | cv2.TERM_CRITERIA_EPS, 30, 0.001)
         #获取标定板角点的位置
@@ -69,7 +71,8 @@ class calibrater:
             print "rvecs:\n",self.rvecs    # 旋转向量   
             print "tvecs:\n",self.tvecs    # 平移向量   
         if sf == True:  #保存内参至文件
-            fileName = 'results/' + time.strftime('%Y_%m_%d_%H_%M_%S')
+            t = time.strftime('%Y_%m_%d_%H_%M_%S')
+            fileName = 'results/text/' + t + '.txt'
             f = open(fileName,'w')
             f.write('ret:'+ str(self.ret) + '\nnumber of images:' + str(self.imageNum) + '\nmtx:\n')
             f.close()
@@ -84,6 +87,27 @@ class calibrater:
             f = open(fileName,'a')
             f.write('\ntotal-error:' + str(self.total_error) + '\n')
             f.close()
+            fileName = 'results/bin/' + t + '.npy'
+            f = open(fileName,'wb')
+            np.save(f,self.mtx)
+            np.save(f,self.dist)
+            np.save(f,self.objpoints)
+            np.save(f,self.pointCounts)
+            f.close()
+
+    #加载内参
+    def loadMtx(self,filename):
+        f = open(filename,'rb')
+        self.mtx = np.load(f)
+        self.dist = np.load(f)
+        self.objpoints = np.load(f)
+        self.pointCounts = np.load(f)
+        print 'Loading calibration data......'
+        print 'mtx:\n',self.mtx
+        print 'dist:\n',self.dist
+        print 'objpoints\n',self.objpoints
+        print 'pointCounts\n',self.pointCounts
+        print 'Calibration data loaded!'
 
     #去除畸变
     def undisort(self):
@@ -124,9 +148,9 @@ class calibrater:
         self.total_error /= len(self.objpoints)
 
     #标定过程
-    def calibrate(self):
+    def calibrate(self,source):
         #获取摄像头信息
-        vc = cv2.VideoCapture(0)
+        vc = cv2.VideoCapture(source)
         #建立窗口
         cv2.namedWindow('capture')
         cv2.createTrackbar('棋盘格宽','capture',10,30,self.update)
@@ -158,10 +182,14 @@ class calibrater:
                     self.shotBoards()
             elif key == ord('d'):   #d键去畸
                 self.undisort()
+            elif key == ord('l'):
+                print 'input the file path:'
+                filename = raw_input()
+                self.loadMtx(filename)
         vc.release()
         cv2.destroyAllWindows()
 
 
 c = calibrater()
 #c.setTr(True,False)
-c.calibrate()
+c.calibrate(0)
